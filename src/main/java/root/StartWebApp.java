@@ -6,22 +6,19 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.eclipse.jetty.jsp.JettyJspServlet;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
-import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
 import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.jsp.JettyJspServlet;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.log.JavaUtilLog;
 import org.eclipse.jetty.util.log.Log;
@@ -38,7 +35,8 @@ public class StartWebApp
 
     public static void main(String[] args) throws Exception
     {
-        int port = 8085;
+    	String portStr = System.getenv("PORT");
+        int port = (portStr == null) ? 8085 : Integer.parseInt(portStr);
         Log.setLog(new JavaUtilLog());
 
         StartWebApp main = new StartWebApp(port);
@@ -159,18 +157,6 @@ public class StartWebApp
     }
 
     /**
-     * Set Classloader of Context to be sane (needed for JSTL)
-     * JSP requires a non-System classloader, this simply wraps the
-     * embedded System classloader in a way that makes it suitable
-     * for JSP to use
-     */
-    private ClassLoader getUrlClassLoader()
-    {
-        ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
-        return jspClassLoader;
-    }
-
-    /**
      * Create JSP Servlet (must be named "jsp")
      */
     private ServletHolder jspServletHolder()
@@ -184,29 +170,6 @@ public class StartWebApp
         holderJsp.setInitParameter("compilerSourceVM", "1.7");
         holderJsp.setInitParameter("keepgenerated", "true");
         return holderJsp;
-    }
-
-    /**
-     * Create Example of mapping jsp to path spec
-     */
-    private ServletHolder exampleJspFileMappedServletHolder()
-    {
-        ServletHolder holderAltMapping = new ServletHolder();
-        holderAltMapping.setName("foo.jsp");
-        holderAltMapping.setForcedPath("/test/foo/foo.jsp");
-        return holderAltMapping;
-    }
-
-    /**
-     * Create Default Servlet (must be named "default")
-     */
-    private ServletHolder defaultServletHolder(URI baseUri)
-    {
-        ServletHolder holderDefault = new ServletHolder("default", DefaultServlet.class);
-        LOG.info("Base URI: " + baseUri);
-        holderDefault.setInitParameter("resourceBase", baseUri.toASCIIString());
-        holderDefault.setInitParameter("dirAllowed", "true");
-        return holderDefault;
     }
 
     /**
